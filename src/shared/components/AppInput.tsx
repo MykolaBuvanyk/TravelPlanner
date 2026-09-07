@@ -1,11 +1,11 @@
 import type { TextInputProps } from 'react-native';
-import type { Ref } from 'react';
+import type { ComponentRef, Ref } from 'react';
 import { Text, TextInput, View } from 'react-native';
 
 type AppInputProps = TextInputProps & {
   label: string;
   error?: string;
-  ref?: Ref<TextInput>;
+  ref?: Ref<ComponentRef<typeof TextInput>>;
 };
 
 export function AppInput({

@@ -88,7 +88,8 @@ export function getLocationError(error: unknown): LocationError {
     case PositionError.TIMEOUT:
       return {
         title: 'Location timed out',
-        description: 'Your position took too long to load. Try again.',
+        description:
+          'Your position took too long to load. On Android Emulator, set a location in Extended controls, then try again.',
       };
     default:
       return {

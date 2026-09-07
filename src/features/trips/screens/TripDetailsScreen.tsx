@@ -17,6 +17,9 @@ import { shareTrip } from '../model/shareTrip';
 
 export type TripDetailsScreenProps = StaticScreenProps<{ tripId: string }>;
 
+const listContainerStyle = { flex: 1 };
+const listContentContainerStyle = { gap: 12, padding: 20 };
+
 export function TripDetailsScreen({ route }: TripDetailsScreenProps) {
   const navigation = useAppNavigation();
   const { tripId } = route.params;
@@ -84,8 +87,8 @@ export function TripDetailsScreen({ route }: TripDetailsScreenProps) {
       <DraggableFlatList
         data={trip.places}
         keyExtractor={item => item.placeId}
-        containerStyle={{ flex: 1 }}
-        contentContainerStyle={{ gap: 12, padding: 20 }}
+        containerStyle={listContainerStyle}
+        contentContainerStyle={listContentContainerStyle}
         activationDistance={12}
         ListHeaderComponent={
           <View className="gap-3 pb-4">

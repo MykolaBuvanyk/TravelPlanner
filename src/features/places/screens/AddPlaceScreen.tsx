@@ -22,6 +22,7 @@ import {
   placeFormSchema,
   type PlaceFormValues,
 } from '../model/place-form.schema';
+import type { CreatePlaceInput } from '../model/place.schema';
 import { usePlacesStore } from '../model/places.store';
 import type { Place } from '../model/place.types';
 import { useAppNavigation } from '../../../navigation/useAppNavigation';
@@ -95,7 +96,7 @@ export function AddPlaceScreen({ route }: AddPlaceScreenProps) {
   }, [reset, place, route.params]);
 
   function onSubmit(values: PlaceFormValues) {
-    const placeInput = {
+    const placeInput: CreatePlaceInput = {
       name: values.name,
       address: toNullable(values.address),
       description: toNullable(values.description),

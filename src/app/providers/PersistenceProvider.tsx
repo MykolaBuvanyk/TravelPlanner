@@ -35,7 +35,7 @@ export function PersistenceProvider({ children }: PropsWithChildren) {
   const writeError = useStorageStatus(state => state.writeError);
   useEffect(() => {
     let active = true;
-    void hydrate().then(
+    hydrate().then(
       () => {
         if (active) setStatus('ready');
       },

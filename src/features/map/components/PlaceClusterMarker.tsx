@@ -9,10 +9,10 @@ type PlaceClusterMarkerProps = {
   onPress: (cluster: MapCluster) => void;
 };
 
-export const PlaceClusterMarker = memo(function PlaceClusterMarker({
+export const PlaceClusterMarker = memo(({
   cluster,
   onPress,
-}: PlaceClusterMarkerProps) {
+}: PlaceClusterMarkerProps) => {
   return (
     <Marker
       identifier={`cluster-${cluster.id}`}

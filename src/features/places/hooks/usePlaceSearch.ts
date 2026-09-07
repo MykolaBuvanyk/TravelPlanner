@@ -15,7 +15,7 @@ async function searchWithOfflineFallback(query: string): Promise<PlaceSearchData
   try {
     const results = await searchPlaces(query);
 
-    void savePlaceSearch(query, results);
+    savePlaceSearch(query, results);
 
     return { results, source: 'network' };
   } catch (error) {

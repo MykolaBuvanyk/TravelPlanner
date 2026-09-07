@@ -24,9 +24,10 @@ export function PlaceTripActions({ placeId }: { placeId: string }) {
           </Text>
           <AppButton
             label={included ? 'Remove from trip' : 'Add to trip'}
-            onPress={() =>
-              included ? remove(trip.id, placeId) : void add(trip.id, placeId)
-            }
+            onPress={() => {
+              if (included) remove(trip.id, placeId);
+              else add(trip.id, placeId);
+            }}
           />
           <AppButton
             label="View trip"

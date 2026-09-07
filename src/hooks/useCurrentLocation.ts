@@ -54,9 +54,9 @@ function getCurrentPosition(): Promise<CurrentLocation> {
       (position: GeoPosition) => resolve(toCurrentLocation(position)),
       reject,
       {
-        accuracy: { android: 'high', ios: 'best' },
-        enableHighAccuracy: true,
-        timeout: 15_000,
+        accuracy: { android: 'balanced', ios: 'best' },
+        enableHighAccuracy: false,
+        timeout: 8_000,
         maximumAge: 300_000,
         showLocationDialog: true,
         forceLocationManager: Platform.OS === 'android',
@@ -89,7 +89,7 @@ export function useCurrentLocation() {
   }, []);
 
   useEffect(() => {
-    void refreshPermission();
+    refreshPermission();
   }, [refreshPermission]);
 
   const locate = useCallback(async () => {

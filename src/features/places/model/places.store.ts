@@ -101,7 +101,8 @@ export const usePlacesStore = create<PlacesState>()(
           return;
         }
 
-        const { [placeId]: _, ...remainingPlaces } = placesById;
+        const remainingPlaces = { ...placesById };
+        delete remainingPlaces[placeId];
 
         set({
           placesById: remainingPlaces,

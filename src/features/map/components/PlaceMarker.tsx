@@ -29,9 +29,9 @@ const categoryIcons = {
   other: MapPin,
 } as const;
 
-export const PlaceMarker = memo(function PlaceMarker({
+export const PlaceMarker = memo(({
   place, isVisited, isSelected, onSelect,
-}: PlaceMarkerProps) {
+}: PlaceMarkerProps) => {
   const Icon = categoryIcons[place.category];
   const markerClassName = isSelected
     ? 'bg-app-primaryPressed'

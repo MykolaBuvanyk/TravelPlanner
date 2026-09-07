@@ -95,7 +95,8 @@ export const useTripsStore = create<TripsState>()(
           return;
         }
 
-        const { [tripId]: _, ...remainingTrips } = tripsById;
+        const remainingTrips = { ...tripsById };
+        delete remainingTrips[tripId];
         const remainingTripIds = tripIds.filter(id => id !== tripId);
 
         set({

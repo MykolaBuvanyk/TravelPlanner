@@ -25,7 +25,7 @@ function save(name: string, value: string) {
 }
 
 export function retryStorageWrites() {
-  for (const [name, value] of pending) void save(name, value);
+  for (const [name, value] of pending) save(name, value);
 }
 
 export function createAppStorage<T>() {
