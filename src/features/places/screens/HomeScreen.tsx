@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { FlatList, ScrollView, Text, View } from 'react-native';
+import { Heart } from 'lucide-react-native';
+import { FlatList, Pressable, ScrollView, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import { AppButton } from '../../../shared/components/AppButton';
@@ -157,12 +158,33 @@ export function HomeScreen() {
               onPress={() => setSelectedCategory(category)}
             />
           ))}
-          <CategoryChip
-            label="Favorites"
-            isSelected={favoritesOnly}
-            onPress={() => setFavoritesOnly(current => !current)}
-          />
         </ScrollView>
+        <Pressable
+          accessibilityLabel={
+            favoritesOnly ? 'Show all places' : 'Show favorite places'
+          }
+          accessibilityRole="button"
+          accessibilityState={{ selected: favoritesOnly }}
+          className={`min-h-12 flex-row items-center justify-center gap-2 rounded-xl border px-5 ${
+            favoritesOnly
+              ? 'border-app-primary bg-app-primary'
+              : 'border-app-border bg-app-surface'
+          }`}
+          onPress={() => setFavoritesOnly(current => !current)}
+        >
+          <Heart
+            color={favoritesOnly ? '#FFFFFF' : '#246BFD'}
+            fill={favoritesOnly ? '#FFFFFF' : 'transparent'}
+            size={18}
+          />
+          <Text
+            className={`text-base font-semibold ${
+              favoritesOnly ? 'text-app-surface' : 'text-app-primary'
+            }`}
+          >
+            Favorites only
+          </Text>
+        </Pressable>
         <View className="gap-2">
           <Text className="text-sm font-medium text-app-text">Sort places</Text>
           <ScrollView
