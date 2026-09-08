@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import Geolocation, {
   type GeoPosition,
@@ -48,25 +48,46 @@ const permissionError = {
   },
 } as const;
 
-function getCurrentPosition(): Promise<CurrentLocation> {
+type PositionOptions = NonNullable<
+  Parameters<typeof Geolocation.getCurrentPosition>[2]
+>;
+
+function requestPosition(options: PositionOptions): Promise<CurrentLocation> {
   return new Promise((resolve, reject) => {
     Geolocation.getCurrentPosition(
       (position: GeoPosition) => resolve(toCurrentLocation(position)),
       reject,
-      {
-        accuracy: { android: 'balanced', ios: 'best' },
-        enableHighAccuracy: false,
-        timeout: 8_000,
-        maximumAge: 300_000,
-        showLocationDialog: true,
-        forceLocationManager: Platform.OS === 'android',
-      },
+      options,
     );
+  });
+}
+
+function getCachedPosition() {
+  return requestPosition({
+    accuracy: { android: 'balanced', ios: 'hundredMeters' },
+    enableHighAccuracy: false,
+    timeout: 2_000,
+    maximumAge: 24 * 60 * 60 * 1_000,
+    showLocationDialog: true,
+    forceLocationManager: false,
+  });
+}
+
+function getFreshPosition() {
+  return requestPosition({
+    accuracy: { android: 'high', ios: 'best' },
+    enableHighAccuracy: true,
+    timeout: 12_000,
+    maximumAge: 60_000,
+    showLocationDialog: true,
+    forceRequestLocation: true,
+    forceLocationManager: false,
   });
 }
 
 export function useCurrentLocation() {
   const [state, setState] = useState<LocationState>({ status: 'idle' });
+  const requestIdRef = useRef(0);
 
   const refreshPermission = useCallback(async () => {
     try {
@@ -90,10 +111,17 @@ export function useCurrentLocation() {
 
   useEffect(() => {
     refreshPermission();
+    return () => {
+      requestIdRef.current += 1;
+    };
   }, [refreshPermission]);
 
   const locate = useCallback(async () => {
-    setState(previous => ({ ...previous, status: 'loading' }));
+    const requestId = ++requestIdRef.current;
+    setState(previous => ({
+      status: 'loading',
+      location: previous.location,
+    }));
 
     try {
       let permission = await check(locationPermission);
@@ -129,14 +157,41 @@ export function useCurrentLocation() {
         return;
       }
 
-      const location = await getCurrentPosition();
-      setState({ status: 'ready', location });
+      if (Platform.OS === 'android') {
+        try {
+          const cachedLocation = await getCachedPosition();
+          if (requestId !== requestIdRef.current) return;
+
+          setState({ status: 'ready', location: cachedLocation });
+
+          getFreshPosition().then(
+            freshLocation => {
+              if (requestId === requestIdRef.current) {
+                setState({ status: 'ready', location: freshLocation });
+              }
+            },
+            () => {
+              // A valid cached position is already available to the user.
+            },
+          );
+          return;
+        } catch {
+          // Continue with a fresh high-accuracy request when no cache exists.
+        }
+      }
+
+      const location = await getFreshPosition();
+      if (requestId === requestIdRef.current) {
+        setState({ status: 'ready', location });
+      }
     } catch (error) {
-      setState(previous => ({
-        ...previous,
-        status: 'error',
-        error: getLocationError(error),
-      }));
+      if (requestId === requestIdRef.current) {
+        setState(previous => ({
+          ...previous,
+          status: 'error',
+          error: getLocationError(error),
+        }));
+      }
     }
   }, []);
 
