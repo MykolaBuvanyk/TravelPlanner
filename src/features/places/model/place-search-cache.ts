@@ -1,10 +1,13 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { z } from 'zod';
 
 import type { PlaceSearchResult } from '../../../api/places';
+import {
+  readCachedSearch,
+  removeCachedSearch,
+  writeCachedSearch,
+} from '../data/placeSearch.repository';
 import { placeCategories } from './place.constants';
 
-const cachePrefix = '@travel-planner/place-search/';
 const cacheLifetimeMilliseconds = 7 * 24 * 60 * 60 * 1_000;
 
 const cachedSearchSchema = z.object({
@@ -23,21 +26,16 @@ const cachedSearchSchema = z.object({
   ),
 });
 
-function getCacheKey(query: string) {
-  return `${cachePrefix}${encodeURIComponent(query.trim().toLowerCase())}`;
-}
-
 export async function savePlaceSearch(
   query: string,
   results: PlaceSearchResult[],
 ) {
-  const value = JSON.stringify({
-    cachedAt: new Date().toISOString(),
-    results,
-  });
-
   try {
-    await AsyncStorage.setItem(getCacheKey(query), value);
+    await writeCachedSearch(
+      query,
+      new Date().toISOString(),
+      JSON.stringify(results),
+    );
   } catch {
     // Search caching is optional. A failed cache write must not fail a search.
   }
@@ -45,13 +43,17 @@ export async function savePlaceSearch(
 
 export async function getCachedPlaceSearch(query: string) {
   try {
-    const value = await AsyncStorage.getItem(getCacheKey(query));
+    const row = await readCachedSearch(query);
+    if (!row) return undefined;
+    const cachedSearch = cachedSearchSchema.safeParse({
+      cachedAt: row.cached_at,
+      results: JSON.parse(row.results_json),
+    });
 
-    if (!value) return undefined;
-
-    const cachedSearch = cachedSearchSchema.safeParse(JSON.parse(value));
-
-    if (!cachedSearch.success) return undefined;
+    if (!cachedSearch.success) {
+      await removeCachedSearch(query);
+      return undefined;
+    }
 
     const cachedAt = new Date(cachedSearch.data.cachedAt).getTime();
 
@@ -59,6 +61,7 @@ export async function getCachedPlaceSearch(query: string) {
       !Number.isFinite(cachedAt) ||
       Date.now() - cachedAt > cacheLifetimeMilliseconds
     ) {
+      await removeCachedSearch(query);
       return undefined;
     }
 

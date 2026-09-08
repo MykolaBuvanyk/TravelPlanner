@@ -39,9 +39,15 @@ export function PlaceDetailsScreen({ route }: PlaceDetailsScreenProps) {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            deleteSavedPlace(placeId);
-            navigation.popTo('MainTabs', { screen: 'Home' });
+          onPress: async () => {
+            if (await deleteSavedPlace(placeId)) {
+              navigation.popTo('MainTabs', { screen: 'Home' });
+            } else {
+              Alert.alert(
+                'Unable to delete place',
+                'The place could not be removed from this device. Please try again.',
+              );
+            }
           },
         },
       ],

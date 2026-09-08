@@ -36,21 +36,32 @@ export function CreateTripScreen({ route }: CreateTripScreenProps) {
     navigation.setOptions({ title: tripId ? 'Rename trip' : 'Create trip' });
   }, [navigation, tripId]);
 
-  function submit(input: CreateTripInput) {
+  async function submit(input: CreateTripInput) {
     const store = useTripsStore.getState();
     if (tripId) {
       if (!store.tripsById[tripId]) {
         setError('root', { message: 'This trip no longer exists.' });
         return;
       }
-      store.renameTrip(tripId, input);
+      if (!(await store.renameTrip(tripId, input))) {
+        setError('root', {
+          message: 'Unable to save this trip. Please try again.',
+        });
+        return;
+      }
       navigation.popTo('TripDetails', { tripId });
       return;
     }
-    const created = store.createTrip(input);
-    store.setActiveTrip(created.id);
+    const created = await store.createTrip(input);
+    if (!created) {
+      setError('root', {
+        message: 'Unable to save this trip. Please try again.',
+      });
+      return;
+    }
+    await store.setActiveTrip(created.id);
     if (route.params?.placeId)
-      store.addPlaceToTrip(created.id, route.params.placeId);
+      await store.addPlaceToTrip(created.id, route.params.placeId);
     navigation.replace('TripDetails', { tripId: created.id });
   }
 

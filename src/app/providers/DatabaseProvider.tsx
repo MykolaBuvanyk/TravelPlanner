@@ -1,41 +1,43 @@
 import { useEffect, useState, type PropsWithChildren } from 'react';
 import { Text, View } from 'react-native';
+
+import { migrateLegacyData } from '../persistence/migrateLegacyData';
 import { usePlacesStore } from '../../features/places/model/places.store';
 import { useTripsStore } from '../../features/trips/model/trips.store';
-import { Screen } from '../../shared/components/Screen';
-import { LoadingState } from '../../shared/components/LoadingState';
-import { ErrorState } from '../../shared/components/ErrorState';
 import { AppButton } from '../../shared/components/AppButton';
-import { useStorageStatus } from '../../shared/storage/storageStatus.store';
-import { retryStorageWrites } from '../../shared/storage/storage';
+import { ErrorState } from '../../shared/components/ErrorState';
+import { LoadingState } from '../../shared/components/LoadingState';
+import { Screen } from '../../shared/components/Screen';
+import { initializeDatabase } from '../../shared/database/database';
+import { useDatabaseStatus } from '../../shared/database/databaseStatus.store';
 
-let hydration: Promise<void> | undefined;
-function hydrate() {
-  if (!hydration) {
-    hydration = (async () => {
-      await usePlacesStore.persist.rehydrate();
-      if (!usePlacesStore.persist.hasHydrated())
-        throw new Error('Unable to load places.');
-      await useTripsStore.persist.rehydrate();
-      if (!useTripsStore.persist.hasHydrated())
-        throw new Error('Unable to load trips.');
+let appDatabaseLoading: Promise<void> | undefined;
+
+function loadAppDatabase() {
+  if (!appDatabaseLoading) {
+    appDatabaseLoading = (async () => {
+      await initializeDatabase();
+      await migrateLegacyData();
+      await usePlacesStore.getState().hydrate();
+      await useTripsStore.getState().hydrate();
     })().catch(error => {
-      hydration = undefined;
+      appDatabaseLoading = undefined;
       throw error;
     });
   }
-  return hydration;
+
+  return appDatabaseLoading;
 }
 
-export function PersistenceProvider({ children }: PropsWithChildren) {
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(
-    'loading',
-  );
+export function DatabaseProvider({ children }: PropsWithChildren) {
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [attempt, setAttempt] = useState(0);
-  const writeError = useStorageStatus(state => state.writeError);
+  const writeError = useDatabaseStatus(state => state.writeError);
+  const setWriteError = useDatabaseStatus(state => state.setWriteError);
+
   useEffect(() => {
     let active = true;
-    hydrate().then(
+    loadAppDatabase().then(
       () => {
         if (active) setStatus('ready');
       },
@@ -48,14 +50,14 @@ export function PersistenceProvider({ children }: PropsWithChildren) {
     };
   }, [attempt]);
 
-  if (status !== 'ready')
+  if (status !== 'ready') {
     return (
       <Screen className="justify-center px-5">
         {status === 'loading' ? (
           <LoadingState label="Loading your travel plans..." />
         ) : (
           <ErrorState
-            title="Unable to load saved data"
+            title="Unable to open local database"
             description="Your saved data has not been deleted. Please try again."
             onRetry={() => {
               setStatus('loading');
@@ -65,6 +67,7 @@ export function PersistenceProvider({ children }: PropsWithChildren) {
         )}
       </Screen>
     );
+  }
 
   return (
     <View className="flex-1">
@@ -72,9 +75,9 @@ export function PersistenceProvider({ children }: PropsWithChildren) {
       {writeError ? (
         <Screen safeEdges={['bottom']} className="flex-none gap-2 px-5 py-3">
           <Text className="text-app-danger">
-            Changes could not be saved. Keep the app open and try again.
+            The change could not be saved to this device. Please try again.
           </Text>
-          <AppButton label="Retry saving" onPress={retryStorageWrites} />
+          <AppButton label="Dismiss" onPress={() => setWriteError(false)} />
         </Screen>
       ) : null}
     </View>

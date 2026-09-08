@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export const useStorageStatus = create<{
+export const useDatabaseStatus = create<{
   writeError: boolean;
   setWriteError: (value: boolean) => void;
 }>(set => ({

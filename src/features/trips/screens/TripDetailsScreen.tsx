@@ -40,9 +40,15 @@ export function TripDetailsScreen({ route }: TripDetailsScreenProps) {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            useTripsStore.getState().deleteTrip(tripId);
-            navigation.popTo('MainTabs', { screen: 'Trips' });
+          onPress: async () => {
+            if (await useTripsStore.getState().deleteTrip(tripId)) {
+              navigation.popTo('MainTabs', { screen: 'Trips' });
+            } else {
+              Alert.alert(
+                'Unable to delete trip',
+                'The trip could not be removed from this device. Please try again.',
+              );
+            }
           },
         },
       ],
@@ -110,8 +116,8 @@ export function TripDetailsScreen({ route }: TripDetailsScreenProps) {
             />
             <AppButton
               label="Add places"
-              onPress={() => {
-                useTripsStore.getState().setActiveTrip(tripId);
+              onPress={async () => {
+                await useTripsStore.getState().setActiveTrip(tripId);
                 navigation.navigate('MainTabs', { screen: 'Home' });
               }}
             />

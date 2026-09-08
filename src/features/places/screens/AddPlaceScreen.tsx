@@ -95,7 +95,7 @@ export function AddPlaceScreen({ route }: AddPlaceScreenProps) {
     reset(getDefaultValues(place, route.params));
   }, [reset, place, route.params]);
 
-  function onSubmit(values: PlaceFormValues) {
+  async function onSubmit(values: PlaceFormValues) {
     const placeInput: CreatePlaceInput = {
       name: values.name,
       address: toNullable(values.address),
@@ -111,13 +111,24 @@ export function AddPlaceScreen({ route }: AddPlaceScreenProps) {
     };
 
     if (placeId && place) {
-      updatePlace(placeId, placeInput);
+      if (!(await updatePlace(placeId, placeInput))) {
+        form.setError('root', {
+          message: 'Unable to save this place. Please try again.',
+        });
+        return;
+      }
       navigation.popTo('PlaceDetails', { placeId });
 
       return;
     }
 
-    const createdPlace = createPlace(placeInput);
+    const createdPlace = await createPlace(placeInput);
+    if (!createdPlace) {
+      form.setError('root', {
+        message: 'Unable to save this place. Please try again.',
+      });
+      return;
+    }
     navigation.replace('PlaceDetails', { placeId: createdPlace.id });
   }
 
@@ -309,6 +320,11 @@ export function AddPlaceScreen({ route }: AddPlaceScreenProps) {
               });
             }}
           />
+          {form.formState.errors.root ? (
+            <Text className="text-app-danger">
+              {form.formState.errors.root.message}
+            </Text>
+          ) : null}
           <AppButton
             disabled={form.formState.isSubmitting}
             label={isEditing ? 'Save changes' : 'Save place'}

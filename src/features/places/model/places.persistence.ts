@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { coordinatesSchema } from './place.schema';
 import { placeCategories } from './place.constants';
 
-const placeSchema = z.object({
+export const persistedPlaceSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1).max(120),
   address: z.string().nullable(),
@@ -19,7 +19,7 @@ const placeSchema = z.object({
 
 export const persistedPlacesSchema = z
   .object({
-    placesById: z.record(z.string(), placeSchema),
+    placesById: z.record(z.string(), persistedPlaceSchema),
     placeIds: z.array(z.string()),
   })
   .transform(({ placesById, placeIds }) => {

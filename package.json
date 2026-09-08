@@ -28,6 +28,8 @@
     "react-native-geolocation-service": "^5.3.1",
     "react-native-gesture-handler": "^3.2.1",
     "react-native-maps": "^1.29.0",
+    "react-native-nitro-modules": "^0.37.1",
+    "react-native-nitro-sqlite": "^9.7.0",
     "react-native-permissions": "^5.6.1",
     "react-native-reanimated": "^4.6.0",
     "react-native-safe-area-context": "^5.9.1",
